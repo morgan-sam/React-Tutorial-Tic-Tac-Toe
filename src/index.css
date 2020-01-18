@@ -3,7 +3,8 @@ body {
   margin: 20px;
 }
 
-ol, ul {
+ol,
+ul {
   padding-left: 30px;
 }
 
@@ -49,3 +50,6 @@ ol, ul {
   margin-left: 20px;
 }
 
+.wonSquare {
+  background-color: lightgreen;
+}

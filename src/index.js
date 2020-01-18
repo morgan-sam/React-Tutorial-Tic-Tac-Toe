@@ -1,19 +1,22 @@
-import React from "react";
-import ReactDOM from "react-dom";
-import "./index.css";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
 
 const GAME_TILE_DIMENSION = 5;
 const LINE_WIN_SIZE = 3;
 
 const SQUARE_KEYS = Array.from(Array(Math.pow(GAME_TILE_DIMENSION, 2))).map(e =>
-  genKey()
+    genKey(),
 );
 
 function Square(props) {
   return (
-    <button className="square" onClick={props.onClick}>
+    <button
+      className={"square " + (props.isWon ? "wonSquare" : null)}
+      onClick={props.onClick}
+    >
       {" "}
-      {props.value}{" "}
+      {props.value}
     </button>
   );
 }
@@ -25,6 +28,7 @@ class Board extends React.Component {
         value={this.props.squares[i]}
         onClick={() => this.props.onClick(i)}
         key={SQUARE_KEYS[i]}
+        isWon={this.props.winningSquares.includes(i)}
       />
     );
   }
@@ -44,8 +48,23 @@ class Board extends React.Component {
       );
     }
 
-    return <div> {items} </div>;
-  }
+    render() {
+        const items = [];
+        for (let i = 0; i < GAME_TILE_DIMENSION; i++) {
+            let children = [];
+            for (let j = 0; j < GAME_TILE_DIMENSION; j++) {
+                children.push(this.renderSquare(j + i * GAME_TILE_DIMENSION));
+            }
+            items.push(
+                <div className="board-row" key={i}>
+                    {' '}
+                    {children}{' '}
+                </div>,
+            );
+        }
+
+        return <div> {items} </div>;
+    }
 }
 
 class Game extends React.Component {
@@ -66,20 +85,9 @@ class Game extends React.Component {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
-    if (calculateWinner(squares) || squares[i]) {
+    if (calculateWonTiles(squares).length > 0 || squares[i]) {
       return;
     }
-    squares[i] = this.state.xIsNext ? "X" : "O";
-    this.setState({
-      history: history.concat([
-        {
-          squares: squares
-        }
-      ]),
-      stepNumber: history.length,
-      xIsNext: !this.state.xIsNext
-    });
-  }
 
   jumpTo(step) {
     this.setState({
@@ -91,7 +99,7 @@ class Game extends React.Component {
   render() {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
-    const winner = calculateWinner(current.squares);
+    let winningSquares = calculateWonTiles(current.squares);
 
     const moves = history.map((step, move) => {
       const desc = move ? "Go to move #" + move : "Go to game start";
@@ -103,8 +111,8 @@ class Game extends React.Component {
     });
 
     let status;
-    if (winner) {
-      status = "Winner: " + winner;
+    if (winningSquares.length > 0) {
+      status = "Winner: " + winningSquares;
     } else {
       status = "Next player: " + (this.state.xIsNext ? "X" : "O");
     }
@@ -112,7 +120,11 @@ class Game extends React.Component {
     return (
       <div className="game">
         <div className="game-board">
-          <Board squares={current.squares} onClick={i => this.handleClick(i)} />{" "}
+          <Board
+            winningSquares={[5, 9, 12]}
+            squares={current.squares}
+            onClick={i => this.handleClick(i)}
+          />{" "}
         </div>
         <div className="game-info">
           <div> {status} </div>
@@ -123,15 +135,14 @@ class Game extends React.Component {
   }
 }
 
-function calculateWinner(squares) {
+function calculateWonTiles(squares) {
   const lines = calculateWinningLines(GAME_TILE_DIMENSION, LINE_WIN_SIZE);
   let coords = Array(GAME_TILE_DIMENSION).fill(null);
   for (let i = 0; i < lines.length; i++) {
-    coords = lines[i];
-    coords = coords.map(el => squares[el]);
-    if (allEqual(coords)) return coords[0];
+    coords = lines[i].map(el => squares[el]);
+    if (allEqual(coords)) return lines[i];
   }
-  return null;
+  return [];
 }
 
 function calculateWinningLines(dimension, winsize) {
@@ -142,58 +153,70 @@ function calculateWinningLines(dimension, winsize) {
   for (let i = 0; i < dimension; i++) {
     horizontal.push([...Array(dimension).keys()].map(x => x + i * dimension));
   }
-  horizontal.forEach(function(el) {
-    for (let i = 0; i < el.length - (winsize - 1); i++) {
-      winningLines.push(el.slice(i, i + winsize));
-    }
-  });
   //vertical
   let vertical = [];
   for (let i = 0; i < dimension; i++) {
     vertical.push([...Array(dimension).keys()].map(x => dimension * x + i));
   }
-  vertical.forEach(function(el) {
-    for (let i = 0; i < el.length - (winsize - 1); i++) {
-      winningLines.push(el.slice(i, i + winsize));
-    }
-  });
 
   //diagonals
-  //start counting diagonal from: dim - win + 1
-  //i.e. 5 wide, win count 3; 5 - 3 + 1 = 3
-
-  let diagonalLines = [];
+  let diagonal = [];
 
   for (let i = -dimension + winsize; i <= dimension - winsize; i++) {
-    diagonalLines.push(
+    //downright, starts top centre tile, finishes starting on left centre
+    diagonal.push(
       [...Array(dimension - Math.abs(i)).keys()].map(
-        x => x * (dimension + 1) - i + (dimension + 1) * Math.max(0, i)
+        x => -i + (dimension + 1) * (x + Math.max(0, i))
+      )
+    );
+    //downleft, starts right centre tile, finishes starting on top centre
+    diagonal.push(
+      [...Array(dimension - Math.abs(i)).keys()].map(
+        x => dimension * i + (dimension - 1) * (1 + x - Math.min(0, i))
       )
     );
   }
-  diagonalLines.forEach(function(el) {
-    for (let i = 0; i < el.length - (winsize - 1); i++) {
-      winningLines.push(el.slice(i, i + winsize));
-    }
-  });
-  console.log(diagonalLines);
-  // winningLines.push(
-  //   [...Array(dimension).keys()].map(x => dimension - 1 + x * (dimension - 1))
-  // );
-  // winningLines.push([...Array(dimension).keys()].map(x => x * (dimension + 1)));
-  console.log(winningLines);
+
+  winningLines.push(splitLinesIntoWinLines(horizontal));
+  winningLines.push(splitLinesIntoWinLines(vertical));
+  winningLines.push(splitLinesIntoWinLines(diagonal));
+  winningLines = winningLines.flat();
   return winningLines;
 }
 
+function splitLinesIntoWinLines(input, winsize = LINE_WIN_SIZE) {
+  let winlines = [];
+  input.forEach(function(el) {
+    for (let i = 0; i < el.length - (winsize - 1); i++) {
+      winlines.push(el.slice(i, i + winsize));
+    }
+
+    winningLines.push(splitLinesIntoWinLines(horizontal));
+    winningLines.push(splitLinesIntoWinLines(vertical));
+    winningLines.push(splitLinesIntoWinLines(diagonal));
+    winningLines = winningLines.flat();
+    return winningLines;
+}
+
+function splitLinesIntoWinLines(input, winsize = LINE_WIN_SIZE) {
+    let winlines = [];
+    input.forEach(function(el) {
+        for (let i = 0; i < el.length - (winsize - 1); i++) {
+            winlines.push(el.slice(i, i + winsize));
+        }
+    });
+    return winlines;
+}
+
 function allEqual(arr) {
-  return arr.every(el => el === arr[0] && arr[0] !== null);
+    return arr.every(el => el === arr[0] && arr[0] !== null);
 }
 // ========================================
 
 function genKey() {
-  return Math.random()
-    .toString(36)
-    .substr(2, 10);
+    return Math.random()
+        .toString(36)
+        .substr(2, 10);
 }
 
-ReactDOM.render(<Game />, document.getElementById("root"));
+ReactDOM.render(<Game />, document.getElementById('root'));
