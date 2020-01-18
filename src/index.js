@@ -135,20 +135,34 @@ function calculateWinner(squares) {
 
 function calculateWinningLines(dimension) {
   let winningLines = [];
+
   //horizontal
+  let horizontal = [];
   for (let i = 0; i < dimension; i++) {
-    winningLines.push([...Array(dimension).keys()].map(x => x + i * dimension));
+    horizontal.push([...Array(dimension).keys()].map(x => x + i * dimension));
   }
+  horizontal.forEach(function(el) {
+    for (let i = 0; i < el.length - 2; i++) {
+      winningLines.push(el.slice(i, i + 3));
+    }
+  });
   //vertical
+  let vertical = [];
   for (let i = 0; i < dimension; i++) {
-    winningLines.push([...Array(dimension).keys()].map(x => dimension * x + i));
+    vertical.push([...Array(dimension).keys()].map(x => dimension * x + i));
   }
+  vertical.forEach(function(el) {
+    for (let i = 0; i < el.length - 2; i++) {
+      winningLines.push(el.slice(i, i + 3));
+    }
+  });
+
   //diagonals
   winningLines.push(
     [...Array(dimension).keys()].map(x => dimension - 1 + x * (dimension - 1))
   );
   winningLines.push([...Array(dimension).keys()].map(x => x * (dimension + 1)));
-
+  console.log(winningLines);
   return winningLines;
 }
 
