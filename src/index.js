@@ -2,7 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 
-const GAME_TILE_DIMENSION = 3;
+const GAME_TILE_DIMENSION = 4;
+const LINE_WIN_SIZE = 3;
 
 const SQUARE_KEYS = Array.from(Array(Math.pow(GAME_TILE_DIMENSION, 2))).map(e =>
   genKey()
@@ -53,7 +54,7 @@ class Game extends React.Component {
     this.state = {
       history: [
         {
-          squares: Array(9).fill(null)
+          squares: Array(Math.pow(GAME_TILE_DIMENSION, 2)).fill(null)
         }
       ],
       xIsNext: true,
@@ -123,8 +124,9 @@ class Game extends React.Component {
 }
 
 function calculateWinner(squares) {
-  const lines = calculateWinningLines(GAME_TILE_DIMENSION);
+  const lines = calculateWinningLines(GAME_TILE_DIMENSION, LINE_WIN_SIZE);
   let coords = Array(GAME_TILE_DIMENSION).fill(null);
+  console.log(squares);
   for (let i = 0; i < lines.length; i++) {
     coords = lines[i];
     coords = coords.map(el => squares[el]);
@@ -133,7 +135,7 @@ function calculateWinner(squares) {
   return null;
 }
 
-function calculateWinningLines(dimension) {
+function calculateWinningLines(dimension, winsize) {
   let winningLines = [];
 
   //horizontal
@@ -142,8 +144,8 @@ function calculateWinningLines(dimension) {
     horizontal.push([...Array(dimension).keys()].map(x => x + i * dimension));
   }
   horizontal.forEach(function(el) {
-    for (let i = 0; i < el.length - 2; i++) {
-      winningLines.push(el.slice(i, i + 3));
+    for (let i = 0; i < el.length - (winsize - 1); i++) {
+      winningLines.push(el.slice(i, i + winsize));
     }
   });
   //vertical
@@ -152,16 +154,16 @@ function calculateWinningLines(dimension) {
     vertical.push([...Array(dimension).keys()].map(x => dimension * x + i));
   }
   vertical.forEach(function(el) {
-    for (let i = 0; i < el.length - 2; i++) {
-      winningLines.push(el.slice(i, i + 3));
+    for (let i = 0; i < el.length - (winsize - 1); i++) {
+      winningLines.push(el.slice(i, i + winsize));
     }
   });
 
   //diagonals
-  winningLines.push(
-    [...Array(dimension).keys()].map(x => dimension - 1 + x * (dimension - 1))
-  );
-  winningLines.push([...Array(dimension).keys()].map(x => x * (dimension + 1)));
+  // winningLines.push(
+  //   [...Array(dimension).keys()].map(x => dimension - 1 + x * (dimension - 1))
+  // );
+  // winningLines.push([...Array(dimension).keys()].map(x => x * (dimension + 1)));
   console.log(winningLines);
   return winningLines;
 }
