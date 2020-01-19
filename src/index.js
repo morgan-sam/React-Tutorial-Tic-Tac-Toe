@@ -103,7 +103,7 @@ class Game extends React.Component {
 
 		let status;
 		if (winningSquares.length > 0) {
-			status = 'Winner: ' + winningSquares;
+			status = 'Winner: ' + current.squares[winningSquares[0]];
 		} else {
 			status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
 		}
