@@ -47,6 +47,34 @@ class Board extends React.Component {
 	}
 }
 
+class Menu extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {
+			gameActive: true
+		};
+	}
+
+	render() {
+		return (
+			<div>
+				<div style={{ display: this.state.gameActive ? 'block' : 'none' }}>
+					<button onClick={() => this.toggleGame(!this.state.gameActive)}>Start</button>
+				</div>
+				<div style={{ display: !this.state.gameActive ? 'block' : 'none' }}>
+					<Game />
+				</div>
+			</div>
+		);
+	}
+
+	toggleGame(boo) {
+		this.setState({
+			gameActive: boo
+		});
+	}
+}
+
 class Game extends React.Component {
 	constructor(props) {
 		super(props);
@@ -192,4 +220,4 @@ function genKey() {
 	return Math.random().toString(36).substr(2, 10);
 }
 
-ReactDOM.render(<Game />, document.getElementById('root'));
+ReactDOM.render(<Menu />, document.getElementById('root'));
