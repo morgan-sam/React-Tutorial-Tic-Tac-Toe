@@ -5,8 +5,6 @@ import './index.css';
 const GAME_TILE_DIMENSION = 5;
 const LINE_WIN_SIZE = 3;
 
-const SQUARE_KEYS = Array.from(Array(Math.pow(GAME_TILE_DIMENSION, 2))).map((e) => genKey());
-
 function Square(props) {
 	return (
 		<button className={'square ' + (props.isWon ? 'wonSquare' : null)} onClick={props.onClick}>
@@ -22,7 +20,7 @@ class Board extends React.Component {
 			<Square
 				value={this.props.squares[i]}
 				onClick={() => this.props.onClick(i)}
-				key={SQUARE_KEYS[i]}
+				key={i}
 				isWon={this.props.winningSquares.includes(i)}
 			/>
 		);
@@ -56,10 +54,25 @@ class Menu extends React.Component {
 	}
 
 	render() {
+		let boardDimChildren = [];
+		for (let i = 3; i <= 10; i++) {
+			boardDimChildren.push(
+				<option value={i} key={i}>
+					{i}
+				</option>
+			);
+		}
+
 		return (
 			<div>
 				<div style={{ display: this.state.gameActive ? 'block' : 'none' }}>
 					<button onClick={() => this.toggleGame(!this.state.gameActive)}>Start</button>
+					<select defaultValue={'DEFAULT'}>
+						<option value="DEFAULT" disabled hidden>
+							Select Board Dimensions
+						</option>
+						{boardDimChildren}
+					</select>
 				</div>
 				<div style={{ display: !this.state.gameActive ? 'block' : 'none' }}>
 					<Game />
@@ -90,6 +103,7 @@ class Game extends React.Component {
 	}
 
 	handleClick(i) {
+		console.log(this.state);
 		const history = this.state.history.slice(0, this.state.stepNumber + 1);
 		const current = history[history.length - 1];
 		const squares = current.squares.slice();
@@ -215,9 +229,5 @@ function allEqual(arr) {
 	return arr.every((el) => el === arr[0] && arr[0] !== null);
 }
 // ========================================
-
-function genKey() {
-	return Math.random().toString(36).substr(2, 10);
-}
 
 ReactDOM.render(<Menu />, document.getElementById('root'));
