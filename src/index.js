@@ -2,8 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 
-const LINE_WIN_SIZE = 3;
-
 function Square(props) {
 	return (
 		<button className={'square ' + (props.isWon ? 'wonSquare' : null)} onClick={props.onClick}>
@@ -85,7 +83,7 @@ class Game extends React.Component {
 	}
 
 	calculateWonTiles(squares) {
-		const lines = this.calculateWinningLines(this.props.boardDimension, LINE_WIN_SIZE);
+		const lines = this.calculateWinningLines(this.props.boardDimension, this.props.boardWinLength);
 		let coords = Array(this.props.boardDimension).fill(null);
 		for (let i = 0; i < lines.length; i++) {
 			coords = lines[i].map((el) => squares[el]);
@@ -131,7 +129,7 @@ class Game extends React.Component {
 		return winningLines;
 	}
 
-	splitLinesIntoWinLines(input, winsize = LINE_WIN_SIZE) {
+	splitLinesIntoWinLines(input, winsize = this.props.boardWinLength) {
 		let winlines = [];
 		input.forEach(function(el) {
 			for (let i = 0; i < el.length - (winsize - 1); i++) {
@@ -189,7 +187,8 @@ class App extends React.Component {
 		super(props);
 		this.state = {
 			gameActive: false,
-			boardDimensions: 3
+			boardDimensions: 3,
+			boardWinLength: 3
 		};
 	}
 
@@ -203,11 +202,24 @@ class App extends React.Component {
 			boardDimensions: value
 		});
 	}
+	setBoardWinLength(value) {
+		this.setState({
+			boardWinLength: value
+		});
+	}
 
 	render() {
-		let boardDimChildren = [];
+		let boardDimensionOptions = [];
 		for (let i = 3; i <= 10; i++) {
-			boardDimChildren.push(
+			boardDimensionOptions.push(
+				<option value={i} key={i}>
+					{i}
+				</option>
+			);
+		}
+		let boardWinLengthOptions = [];
+		for (let i = 3; i <= this.state.boardDimensions; i++) {
+			boardWinLengthOptions.push(
 				<option value={i} key={i}>
 					{i}
 				</option>
@@ -215,7 +227,13 @@ class App extends React.Component {
 		}
 		let gameDisplay, menuOptions;
 		if (this.state.gameActive) {
-			gameDisplay = [ <Game boardDimension={this.state.boardDimensions} key={'game'} /> ];
+			gameDisplay = [
+				<Game
+					boardDimension={this.state.boardDimensions}
+					boardWinLength={this.state.boardWinLength}
+					key={'game'}
+				/>
+			];
 			menuOptions = null;
 		} else {
 			gameDisplay = null;
@@ -225,7 +243,13 @@ class App extends React.Component {
 					<option value="DEFAULT" disabled hidden>
 						Select Board Dimensions
 					</option>
-					{boardDimChildren}
+					{boardDimensionOptions}
+				</select>,
+				<select defaultValue={'DEFAULT'} onChange={(e) => this.setBoardWinLength(parseInt(e.target.value))}>
+					<option value="DEFAULT" disabled hidden>
+						Select Board Win Length
+					</option>
+					{boardWinLengthOptions}
 				</select>
 			];
 		}
